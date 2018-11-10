@@ -64,9 +64,9 @@ public class Main {
 			processos.add(novo);
 		}
 		
-		System.out.println("Iniciando Worst Fit ...");
+		System.out.println("\n Iniciando Worst Fit ...");
 		memoria.worstFit(processos);
-		Processador.processaMultinivel(memoria);
+		new Processador().processaMultinivel(memoria);
 	}
 
 }

@@ -1,6 +1,7 @@
 package usjt.esc.escalonador;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 
 import usjt.esc.memoria.Memoria;
@@ -10,65 +11,142 @@ public class Processador {
 
 	private static Integer TAMANHO_FIXO_MEMORIA = 100;
 	private static Integer QUANTUM = 5;
-	private static Integer QTDE_NIVEIS = 3;
+	private Boolean memoriaOcupado = false;
+	private Boolean hasEspera = false;
+	private Processo processoAtivo;
+	private Processo processoEspera;
 
-	protected static void processaMultinivel(Memoria memoria) {
-		// esse metodo tem a responsabilidade de recuperar todos os processos da memoria
-		// e emular o escalonador
-
-		List<Processo> procs = new ArrayList<>();
-		for (Particao p : memoria.getParticoes()) { // recupera os processos das particoes para serem processados
-			if (!p.getProcessos().isEmpty()) {
-				procs.addAll(p.getProcessos());
-			}
-		}
-
-		Processo processoAtivo = procs.get(0);
-		Integer validaQuantum = 0;
-		Integer fimNivel = 0;
-		for (Processo p : procs) {
-			
-			if((p.getDuracaoUU() - QUANTUM) < 0) {				
-				fimNivel += QUANTUM;
-			}else {
-				fimNivel += p.getDuracaoUU();
-			}
-			if (p.getTempoChegada() < processoAtivo.getTempoChegada()) {
-				processoAtivo = p;
-			}
-		}
-
-		System.out.println("\n Iniciando o processamento da memoria ... \n");
-		for (int j = 1; j < QTDE_NIVEIS; j++) {
-			System.out.println("\n---------- NIVEL " + j + "----------");
-
-			for (int i = 1; i <= TAMANHO_FIXO_MEMORIA; i++) {
-				if (i != fimNivel) {
-					System.out.println("uu[" + i + "]- ");
-
-					if (validaQuantum != QUANTUM) {
-						++validaQuantum;
-						for (Processo p : procs) {
-							if (p.getTempoChegada().equals(i)) {
-								processoAtivo = p;
-								if (processoAtivo == p) {
-									System.out.println(" Processo " + p.getNome() + " iniciado!");
-								}
-
-							}
-						}
-
-					} else {
-						System.out.println(" -Quantum encerrado ");
-						validaQuantum = 0;
-					}
-				} else {
-					break;
-				}
-			}
-		}
-
-		// TODO montar o ROUDING ROBING
+	public Processador() {
+		processoAtivo = new Processo();
+		processoEspera = new Processo();
 	}
 
+	public Processo getProcessoAtivo() {
+		return processoAtivo;
+	}
+
+	public void setProcessoAtivo(Processo processoAtivo) {
+		this.processoAtivo = processoAtivo;
+	}
+
+	public Processo getProcessoEspera() {
+		return processoEspera;
+	}
+
+	public void setProcessoEspera(Processo processoEspera) {
+		this.processoEspera = processoEspera;
+	}
+
+	private void atualizaProcessoEspera(Processo p) {
+		this.processoEspera.setDuracaoUU(p.getDuracaoUU());
+		this.processoEspera.setId(p.getId());
+		this.processoEspera.setNome(p.getNome());
+		this.processoEspera.setTempoRestante(p.getTempoRestante());
+		this.processoEspera.setTempoChegada(p.getTempoChegada());
+		this.hasEspera = true;
+	}
+
+	private void atualizaProcessoAtivo(Processo p) {
+		this.processoAtivo.setDuracaoUU(p.getDuracaoUU());
+		this.processoAtivo.setId(p.getId());
+		this.processoAtivo.setNome(p.getNome());
+		this.processoAtivo.setTempoRestante(p.getTempoRestante());
+		this.processoAtivo.setTempoChegada(p.getTempoChegada());
+		this.memoriaOcupado = true;
+	}
+
+	private void ifEspera() {
+		if (Boolean.TRUE.equals(hasEspera)) {
+			this.processoAtivo.setDuracaoUU(this.processoEspera.getDuracaoUU());
+			this.processoAtivo.setId(this.processoEspera.getId());
+			this.processoAtivo.setNome(this.processoEspera.getNome());
+			this.processoAtivo.setTempoRestante(this.processoEspera.getTempoRestante());
+			this.processoAtivo.setTempoChegada(this.processoEspera.getTempoChegada());
+			this.hasEspera = true;
+		}
+	}
+
+	protected void processaMultinivel(Memoria memoria) {
+		// esse metodo tem a responsabilidade de recuperar todos os processos da memoria
+		// e emular o escalonador
+		try {
+			List<Processo> procs = new ArrayList<>();
+			for (Particao p : memoria.getParticoes()) { // recupera os processos das particoes para serem processados
+				if (!p.getProcessos().isEmpty()) {
+					procs.addAll(p.getProcessos());
+				}
+			}
+
+			System.out.println("\n Iniciando o processamento da memoria ... \n");
+			System.out.println("\n---------- NIVEL 1 ----------");
+
+			Integer validaQuantum = 0;
+			for (int i = 0; i < TAMANHO_FIXO_MEMORIA; i++) {
+				if (procs.isEmpty()) {
+					break;
+				}
+				System.out.println("uu[" + i + "]: ");
+				if(this.processoAtivo.getId() != null && this.processoAtivo.getTempoChegada() > i) {
+					continue; 
+				}
+//TODO ajustar
+				for (Processo p : procs) {
+					if (p.getTempoChegada() == i && (memoriaOcupado == false)) {
+						atualizaProcessoAtivo(p);
+					} else if (p.getTempoChegada() != i && (memoriaOcupado == false)) {
+						continue;
+					} else {
+						atualizaProcessoEspera(p);
+					}
+				}
+
+				if ((validaQuantum != QUANTUM) && (this.processoAtivo.getId() != null)) {
+					validaQuantum++;
+					if (this.processoAtivo.getTempoRestante() >= 0) {
+						Integer uu = this.processoAtivo.getTempoRestante() - 1;
+						System.out.println(this.processoAtivo);
+						this.processoAtivo.setTempoRestante(uu);
+					} else {
+						for (Processo p : procs) {
+							if (p.getId() == this.processoAtivo.getId()) {
+								procs.remove(p);
+							}
+						}
+					}
+				} else {
+					validaQuantum = 1;
+					if (this.processoAtivo.getId() != null) {
+						if (this.processoAtivo.getTempoRestante() >= 0) {
+							Integer uu = this.processoAtivo.getTempoRestante() - 1;
+							System.out.println(this.processoAtivo + " ----Quantum finalizado!");
+							this.processoAtivo.setTempoRestante(uu);
+							if (this.processoAtivo.getTempoRestante() > 0) {
+								for (Processo p : procs) {
+									if (p.getId() == this.processoAtivo.getId()) {
+										procs.remove(p);
+									}
+								}
+							}
+						} else {
+
+							for (Processo p : procs) {
+								if (p.getId() == this.processoAtivo.getId()) {
+									procs.remove(p);
+								}
+							}
+						}
+					}
+					this.memoriaOcupado = false;
+					ifEspera();
+				}
+
+			}
+
+		} catch (ConcurrentModificationException e) {
+			System.out.println("\n---------- NIVEL 1[FINALIZADO]----------");
+		}
+
+	}
 }
+
+// TODO montar o ROUDING ROBING
