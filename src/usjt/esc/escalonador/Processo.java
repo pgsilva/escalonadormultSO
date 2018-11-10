@@ -12,6 +12,7 @@ public class Processo {
 		this.id = id;
 		this.nome = nome;
 		this.tempoChegada = tempoChegada;
+		this.tempoRestante = duracaoUU;
 		this.duracaoUU = duracaoUU;
 	}
 	public Processo() {

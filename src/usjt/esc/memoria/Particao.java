@@ -12,7 +12,7 @@ public class Particao {
 	private List<Processo> processos;
 
 	public Particao() {
-		processos = new ArrayList<>();
+
 	}
 
 	public Particao(Integer tamanho) {
@@ -48,6 +48,15 @@ public class Particao {
 	public Processo addProcesso(Processo p) {
 		if (p.getDuracaoUU() < this.getTamanhoAtual()) {
 			this.processos.add(p);
+			return null;
+		} else {
+			return p;
+		}
+
+	}
+	
+	public Processo validaEspaco(Processo p) {
+		if (p.getDuracaoUU() < this.getTamanhoAtual()) {
 			return null;
 		} else {
 			return p;

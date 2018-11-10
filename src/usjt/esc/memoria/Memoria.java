@@ -5,6 +5,8 @@ import java.util.List;
 import usjt.esc.escalonador.Processo;
 
 public class Memoria {
+	
+	private static Integer TAMANHO_FIXO_MEMORIA = 100;
 
 	private Integer tamanho;
 	private List<Particao> particoes;
@@ -37,7 +39,7 @@ public class Memoria {
 	public void worstFit(List<Processo> processos) {
 		// fazer uma iteracao com o tamanho da memoria, para alocar cada processo em sua
 		// particao devida, ja q nao faremos runtime !
-		for (int i = 1; i <= 100; i++) {
+		for (int i = 1; i <= TAMANHO_FIXO_MEMORIA; i++) {
 
 			for (Processo p : processos) { // verifica se alguns dos processos chegou em algum momento e aloca no
 											// worstfit
@@ -48,7 +50,7 @@ public class Memoria {
 							&& (this.particoes.get(0).getTamanhoAtual() - p.getDuracaoUU() > this.particoes.get(2).getTamanhoAtual() - p.getDuracaoUU())
 							&& (this.particoes.get(0).getTamanhoAtual() - p.getDuracaoUU() > this.particoes.get(3).getTamanhoAtual() - p.getDuracaoUU())
 						) {
-						if (this.particoes.get(0).addProcesso(p) == null) {
+						if (this.particoes.get(0).validaEspaco(p) == null) {
 
 							this.particoes.get(0).addProcesso(p);
 							this.particoes.get(0).setTamanhoAtual(this.particoes.get(0).getTamanhoAtual() - p.getDuracaoUU());
@@ -65,7 +67,7 @@ public class Memoria {
 								&& (this.particoes.get(1).getTamanhoAtual() - p.getDuracaoUU() > this.particoes.get(2).getTamanhoAtual() - p.getDuracaoUU())
 								&& (this.particoes.get(1).getTamanhoAtual() - p.getDuracaoUU() > this.particoes.get(3).getTamanhoAtual() - p.getDuracaoUU())
 						) {
-						if (this.particoes.get(1).addProcesso(p) == null) {
+						if (this.particoes.get(1).validaEspaco(p) == null) {
 
 							this.particoes.get(1).addProcesso(p);
 							this.particoes.get(1).setTamanhoAtual(this.particoes.get(1).getTamanhoAtual() - p.getDuracaoUU());
@@ -82,7 +84,7 @@ public class Memoria {
 							&& (this.particoes.get(2).getTamanhoAtual() - p.getDuracaoUU() > this.particoes.get(3).getTamanhoAtual() - p.getDuracaoUU())
 							) {
 						
-						if (this.particoes.get(2).addProcesso(p) == null) {
+						if (this.particoes.get(2).validaEspaco(p) == null) {
 
 							this.particoes.get(2).addProcesso(p);
 							this.particoes.get(2).setTamanhoAtual(this.particoes.get(2).getTamanhoAtual() - p.getDuracaoUU());
@@ -100,7 +102,7 @@ public class Memoria {
 							&& (this.particoes.get(3).getTamanhoAtual() - p.getDuracaoUU() > this.particoes.get(0).getTamanhoAtual() - p.getDuracaoUU())
 							) {
 						
-						if (this.particoes.get(3).addProcesso(p) == null) {
+						if (this.particoes.get(3).validaEspaco(p) == null) {
 
 							this.particoes.get(3).addProcesso(p);
 							this.particoes.get(3).setTamanhoAtual(this.particoes.get(3).getTamanhoAtual() - p.getDuracaoUU());
