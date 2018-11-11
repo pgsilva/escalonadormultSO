@@ -8,6 +8,11 @@ import javax.swing.JOptionPane;
 import usjt.esc.memoria.Memoria;
 import usjt.esc.memoria.Particao;
 
+/**
+ * Emulador de Escalonado multinivel USJT
+ * @author paulog
+ *
+ */
 public class Main {
 
 	private static Integer TAMANHO_FIXO_MEMORIA = 100;
@@ -40,7 +45,7 @@ public class Main {
 
 		alocaProcessos(memoria1);
 		if(memoria1 != null) {
-			System.out.println("Worst Fit foi um sucesso !");
+			System.out.println("PROCESSADOR EMULADO COM SUCESSO! ");
 		}
 	}
 

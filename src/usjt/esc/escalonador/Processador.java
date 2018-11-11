@@ -391,7 +391,58 @@ public class Processador {
 		}
 	}
 
-	protected void processaRR(List<Processo> procs) {
-		System.out.println(procs);
+	protected void processaRR(List<Processo> procs3) {
+		// metodo rodin robin trabalha circular e por quantum
+		try {
+			Integer flagFim = procs3.size();
+			Integer flagverificaFim = 0;
+			Integer contProcessoAtual = 0;
+			Boolean processoAndamento = true;
+			System.out.println("\n---------- NIVEL 3 RODING ROBIN----------");
+
+			Integer validaQuantum = 0;
+			for (int i = 1; i <= TAMANHO_FIXO_MEMORIA; i++) {
+				if (flagFim == flagverificaFim) {
+					throw new ConcurrentModificationException();
+				}
+				System.out.println("uu[" + i + "]: ");
+
+				if (procs3.get(contProcessoAtual).getId() != null && processoAndamento) {
+					atualizaProcessoAtivo(procs3.get(contProcessoAtual));
+					processoAndamento = false;
+				}
+
+				if ((validaQuantum != QUANTUM) && (this.processoAtivo.getId() != null)) {
+					validaQuantum++;
+					if (this.processoAtivo.getTempoRestante() >= 0) {
+						Integer uu = this.processoAtivo.getTempoRestante() - 1;
+						System.out.println(this.processoAtivo);
+						this.processoAtivo.setTempoRestante(uu);
+						if (this.processoAtivo.getTempoRestante() <= 0) {
+							for (Processo p : procs3) {
+								if (p.getId() == this.processoAtivo.getId()) {
+									procs3.remove(p);
+								}
+							}
+						}
+					}
+
+				} else {
+					validaQuantum = 1;
+					System.out.println(this.processoAtivo + " ----Quantum finalizado!");
+					if (flagFim > 1) {
+						++contProcessoAtual;  
+					}else {
+						continue; 
+					}
+
+
+				}
+			}
+		} catch (ConcurrentModificationException e) {
+			System.out.println("\n---------- NIVEL 3[FINALIZADO]----------");
+		} catch (Exception e1) {
+			System.out.println("\n---------- NIVEL 3[FINALIZADO]----------");
+		}
 	}
 }
