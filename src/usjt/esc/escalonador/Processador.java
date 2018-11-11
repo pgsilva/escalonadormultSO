@@ -62,13 +62,22 @@ public class Processador {
 			this.processoAtivo.setNome(this.processoEspera.getNome());
 			this.processoAtivo.setTempoRestante(this.processoEspera.getTempoRestante());
 			this.processoAtivo.setTempoChegada(this.processoEspera.getTempoChegada());
-			this.hasEspera = true;
+			this.hasEspera = false;
 		}
+	}
+
+	private void finalizaProcessoAtual() {
+		this.processoAtivo.setDuracaoUU(null);
+		this.processoAtivo.setId(null);
+		this.processoAtivo.setNome(null);
+		this.processoAtivo.setTempoRestante(null);
+		this.processoAtivo.setTempoChegada(null);
 	}
 
 	protected void processaMultinivel(Memoria memoria) {
 		// esse metodo tem a responsabilidade de recuperar todos os processos da memoria
 		// e emular o escalonador
+		List<Processo> procs2 = new ArrayList<>();
 		try {
 			List<Processo> procs = new ArrayList<>();
 			for (Particao p : memoria.getParticoes()) { // recupera os processos das particoes para serem processados
@@ -76,27 +85,32 @@ public class Processador {
 					procs.addAll(p.getProcessos());
 				}
 			}
+			Integer flagFim = procs.size();
+			Integer flagverificaFim = 0;
 
 			System.out.println("\n Iniciando o processamento da memoria ... \n");
 			System.out.println("\n---------- NIVEL 1 ----------");
 
 			Integer validaQuantum = 0;
 			for (int i = 0; i < TAMANHO_FIXO_MEMORIA; i++) {
-				if (procs.isEmpty()) {
-					break;
+				if (flagFim == flagverificaFim) {
+					throw new ConcurrentModificationException();
 				}
 				System.out.println("uu[" + i + "]: ");
-				if(this.processoAtivo.getId() != null && this.processoAtivo.getTempoChegada() > i) {
-					continue; 
+				if (this.processoAtivo.getId() != null && this.processoAtivo.getTempoChegada() > i) {
+					continue;
 				}
-//TODO ajustar
+
 				for (Processo p : procs) {
 					if (p.getTempoChegada() == i && (memoriaOcupado == false)) {
 						atualizaProcessoAtivo(p);
 					} else if (p.getTempoChegada() != i && (memoriaOcupado == false)) {
 						continue;
-					} else {
+					} else if ((p.getTempoChegada() == i) && (memoriaOcupado == true)
+							&& (this.processoEspera.getId() == null)) {
 						atualizaProcessoEspera(p);
+					} else {
+						continue;
 					}
 				}
 
@@ -109,7 +123,9 @@ public class Processador {
 					} else {
 						for (Processo p : procs) {
 							if (p.getId() == this.processoAtivo.getId()) {
-								procs.remove(p);
+								procs2.add(this.processoAtivo);
+								++flagverificaFim;
+								finalizaProcessoAtual();
 							}
 						}
 					}
@@ -123,7 +139,9 @@ public class Processador {
 							if (this.processoAtivo.getTempoRestante() > 0) {
 								for (Processo p : procs) {
 									if (p.getId() == this.processoAtivo.getId()) {
-										procs.remove(p);
+										procs2.add(this.processoAtivo);
+										++flagverificaFim;
+										finalizaProcessoAtual();
 									}
 								}
 							}
@@ -131,7 +149,9 @@ public class Processador {
 
 							for (Processo p : procs) {
 								if (p.getId() == this.processoAtivo.getId()) {
-									procs.remove(p);
+									++flagverificaFim;
+									procs2.add(this.processoAtivo);
+									finalizaProcessoAtual();
 								}
 							}
 						}
@@ -144,8 +164,13 @@ public class Processador {
 
 		} catch (ConcurrentModificationException e) {
 			System.out.println("\n---------- NIVEL 1[FINALIZADO]----------");
+			processaNv2(procs2);
 		}
 
+	}
+
+	protected void processaNv2(List<Processo> procs2) {
+		System.out.println(procs2);
 	}
 }
 
