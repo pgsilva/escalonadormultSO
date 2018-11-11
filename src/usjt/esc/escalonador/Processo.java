@@ -7,6 +7,13 @@ public class Processo {
 	private Integer tempoChegada;
 	private Integer tempoRestante;
 	private Integer duracaoUU;
+	
+	public Processo(Integer id,String nome, Integer tempoRestante) {
+		this.id = id;
+		this.nome = nome;
+		this.tempoRestante = tempoRestante;
+		this.duracaoUU = tempoRestante;
+	}
 	public Processo(Integer id, String nome, Integer tempoChegada, Integer duracaoUU) {
 		super();
 		this.id = id;

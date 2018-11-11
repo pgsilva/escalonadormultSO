@@ -120,10 +120,14 @@ public class Processador {
 						Integer uu = this.processoAtivo.getTempoRestante() - 1;
 						System.out.println(this.processoAtivo);
 						this.processoAtivo.setTempoRestante(uu);
+						if (this.processoAtivo.getTempoRestante() <= 0) {
+							flagverificaFim++;
+						}
 					} else {
 						for (Processo p : procs) {
 							if (p.getId() == this.processoAtivo.getId()) {
-								procs2.add(this.processoAtivo);
+								procs2.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+										this.processoAtivo.getTempoRestante()));
 								++flagverificaFim;
 								finalizaProcessoAtual();
 							}
@@ -136,10 +140,14 @@ public class Processador {
 							Integer uu = this.processoAtivo.getTempoRestante() - 1;
 							System.out.println(this.processoAtivo + " ----Quantum finalizado!");
 							this.processoAtivo.setTempoRestante(uu);
+							if (this.processoAtivo.getTempoRestante() <= 0) {
+								flagverificaFim++;
+							}
 							if (this.processoAtivo.getTempoRestante() > 0) {
 								for (Processo p : procs) {
 									if (p.getId() == this.processoAtivo.getId()) {
-										procs2.add(this.processoAtivo);
+										procs2.add(new Processo(this.processoAtivo.getId(),
+												this.processoAtivo.getNome(), this.processoAtivo.getTempoRestante()));
 										++flagverificaFim;
 										finalizaProcessoAtual();
 									}
@@ -150,7 +158,8 @@ public class Processador {
 							for (Processo p : procs) {
 								if (p.getId() == this.processoAtivo.getId()) {
 									++flagverificaFim;
-									procs2.add(this.processoAtivo);
+									procs2.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+											this.processoAtivo.getTempoRestante()));
 									finalizaProcessoAtual();
 								}
 							}
@@ -170,8 +179,219 @@ public class Processador {
 	}
 
 	protected void processaNv2(List<Processo> procs2) {
-		System.out.println(procs2);
+		List<Processo> procs3 = new ArrayList<>();
+		try {
+			Integer flagFim = procs2.size();
+			Integer flagverificaFim = 0;
+			Integer contProcessoAtual = 0;
+			Boolean processoAndamento = true;
+			System.out.println("\n---------- NIVEL 2----------");
+
+			Integer validaQuantum = 0;
+			for (int i = 1; i <= TAMANHO_FIXO_MEMORIA; i++) {
+				if (flagFim == flagverificaFim) {
+					throw new ConcurrentModificationException();
+				}
+				System.out.println("uu[" + i + "]: ");
+
+				if (procs2.get(contProcessoAtual).getId() != null && processoAndamento) {
+					atualizaProcessoAtivo(procs2.get(contProcessoAtual));
+					processoAndamento = false;
+				}
+
+				if ((validaQuantum != QUANTUM) && (this.processoAtivo.getId() != null)) {
+					validaQuantum++;
+					if (this.processoAtivo.getTempoRestante() >= 0) {
+						Integer uu = this.processoAtivo.getTempoRestante() - 1;
+						System.out.println(this.processoAtivo);
+						this.processoAtivo.setTempoRestante(uu);
+						if (this.processoAtivo.getTempoRestante() <= 0) {
+							validaQuantum = 1;
+							processoAndamento = true;
+							contProcessoAtual++;
+							continue;
+						}
+					} else if (this.processoAtivo.getTempoRestante() == 0) {
+
+						for (Processo p : procs2) {
+							if (p.getId() == this.processoAtivo.getId()) {
+								++flagverificaFim;
+								procs3.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+										this.processoAtivo.getTempoRestante()));
+								finalizaProcessoAtual();
+							}
+						}
+						contProcessoAtual++;
+						processoAndamento = true;
+					} else {
+						for (Processo p : procs2) {
+							if (p.getId() == this.processoAtivo.getId()) {
+								++flagverificaFim;
+								procs3.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+										this.processoAtivo.getTempoRestante()));
+								finalizaProcessoAtual();
+							}
+						}
+						contProcessoAtual++;
+						processoAndamento = true;
+					}
+				} else {
+					validaQuantum = 1;
+					if (this.processoAtivo.getId() != null) {
+						if (this.processoAtivo.getTempoRestante() >= 0) {
+							Integer uu = this.processoAtivo.getTempoRestante() - 1;
+							System.out.println(this.processoAtivo + " ----Quantum finalizado!");
+							this.processoAtivo.setTempoRestante(uu);
+							if (this.processoAtivo.getTempoRestante() > 0) {
+								for (Processo p : procs2) {
+									if (p.getId() == this.processoAtivo.getId()) {
+										++flagverificaFim;
+										procs3.add(new Processo(this.processoAtivo.getId(),
+												this.processoAtivo.getNome(), this.processoAtivo.getTempoRestante()));
+										finalizaProcessoAtual();
+									}
+								}
+								contProcessoAtual++;
+								processoAndamento = true;
+							}
+						} else {
+
+							for (Processo p : procs2) {
+								if (p.getId() == this.processoAtivo.getId()) {
+									++flagverificaFim;
+									procs3.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+											this.processoAtivo.getTempoRestante()));
+									finalizaProcessoAtual();
+
+								}
+							}
+							contProcessoAtual++;
+							processoAndamento = true;
+						}
+					}
+					this.memoriaOcupado = false;
+					ifEspera();
+				}
+
+			}
+
+		} catch (ConcurrentModificationException e) {
+			System.out.println("\n---------- NIVEL 2[FINALIZADO]----------");
+			processaNv3(procs3);
+		} catch (IndexOutOfBoundsException e1) {
+			System.out.println("\n---------- NIVEL 2[FINALIZADO]----------");
+			processaNv3(procs3);
+		}
+
+	}
+
+	protected void processaNv3(List<Processo> procs3) {
+		List<Processo> procsrr = new ArrayList<>();
+		try {
+			Integer flagFim = procs3.size();
+			Integer flagverificaFim = 0;
+			Integer contProcessoAtual = 0;
+			Boolean processoAndamento = true;
+			System.out.println("\n---------- NIVEL 3----------");
+
+			Integer validaQuantum = 0;
+			for (int i = 1; i <= TAMANHO_FIXO_MEMORIA; i++) {
+				if (flagFim == flagverificaFim) {
+					throw new ConcurrentModificationException();
+				}
+				System.out.println("uu[" + i + "]: ");
+
+				if (procs3.get(contProcessoAtual).getId() != null && processoAndamento) {
+					atualizaProcessoAtivo(procs3.get(contProcessoAtual));
+					processoAndamento = false;
+				}
+
+				if ((validaQuantum != QUANTUM) && (this.processoAtivo.getId() != null)) {
+					validaQuantum++;
+					if (this.processoAtivo.getTempoRestante() >= 0) {
+						Integer uu = this.processoAtivo.getTempoRestante() - 1;
+						System.out.println(this.processoAtivo);
+						this.processoAtivo.setTempoRestante(uu);
+						if (this.processoAtivo.getTempoRestante() <= 0) {
+							validaQuantum = 1;
+							processoAndamento = true;
+							contProcessoAtual++;
+							continue;
+						}
+					} else if (this.processoAtivo.getTempoRestante() == 0) {
+
+						for (Processo p : procs3) {
+							if (p.getId() == this.processoAtivo.getId()) {
+								++flagverificaFim;
+								procsrr.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+										this.processoAtivo.getTempoRestante()));
+								finalizaProcessoAtual();
+							}
+						}
+						contProcessoAtual++;
+						processoAndamento = true;
+					} else {
+						for (Processo p : procs3) {
+							if (p.getId() == this.processoAtivo.getId()) {
+								++flagverificaFim;
+								procsrr.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+										this.processoAtivo.getTempoRestante()));
+								finalizaProcessoAtual();
+							}
+						}
+						contProcessoAtual++;
+						processoAndamento = true;
+					}
+				} else {
+					validaQuantum = 1;
+					if (this.processoAtivo.getId() != null) {
+						if (this.processoAtivo.getTempoRestante() >= 0) {
+							Integer uu = this.processoAtivo.getTempoRestante() - 1;
+							System.out.println(this.processoAtivo + " ----Quantum finalizado!");
+							this.processoAtivo.setTempoRestante(uu);
+							if (this.processoAtivo.getTempoRestante() > 0) {
+								for (Processo p : procs3) {
+									if (p.getId() == this.processoAtivo.getId()) {
+										++flagverificaFim;
+										procsrr.add(new Processo(this.processoAtivo.getId(),
+												this.processoAtivo.getNome(), this.processoAtivo.getTempoRestante()));
+										finalizaProcessoAtual();
+									}
+								}
+								contProcessoAtual++;
+								processoAndamento = true;
+							}
+						} else {
+
+							for (Processo p : procs3) {
+								if (p.getId() == this.processoAtivo.getId()) {
+									++flagverificaFim;
+									procsrr.add(new Processo(this.processoAtivo.getId(), this.processoAtivo.getNome(),
+											this.processoAtivo.getTempoRestante()));
+									finalizaProcessoAtual();
+
+								}
+							}
+							contProcessoAtual++;
+							processoAndamento = true;
+						}
+					}
+					this.memoriaOcupado = false;
+					ifEspera();
+				}
+
+			}
+
+		} catch (ConcurrentModificationException e) {
+			System.out.println("\n---------- NIVEL 3[FINALIZADO]----------");
+			processaRR(procsrr);
+		} catch (IndexOutOfBoundsException e1) {
+			System.out.println("\n---------- NIVEL 3[FINALIZADO]----------");
+			processaRR(procsrr);
+		}
+	}
+
+	protected void processaRR(List<Processo> procs) {
+		System.out.println(procs);
 	}
 }
-
-// TODO montar o ROUDING ROBING
